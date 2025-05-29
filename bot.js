@@ -492,7 +492,6 @@ function mainTelegram() {
     }
 const salt = keccak256(defaultAbiCoder.encode(["address", "uint256"], [wallet.address, timestampNow]));
 const instruction = { version: "0", opcode: "0x02", operand };
-const instruction = { version: "0", opcode: "0x02", operand };
     if (data === 'add_wallet') {
       userState[chatId] = { step: 'add_wallet_input' };
       bot.sendMessage(chatId, 'Harap masukkan detail dompet dengan format:\nnama: <nama_dompet>\nkunci_pribadi: <kunci_pribadi>\nalamat_babylon: <alamat_babylon> (opsional)', {
