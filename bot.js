@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-// Impor komponen ethers yang spesifik untuk v6
-const { ethers, JsonRpcProvider, Wallet, keccak256, solidityPacked } = require('ethers');
+const { ethers, JsonRpcProvider } = require('ethers');
 const axios = require('axios');
 const moment = require('moment-timezone');
 const readline = require('readline');
@@ -233,7 +232,7 @@ async function pollPacketHash(txHash, retries = 50, intervalMs = 5000) {
 
 // Fungsi untuk mengirim transaksi dari dompet
 async function sendFromWallet(walletInfo, maxTransaction, destination, telegramBot = null, chatId = null) {
-  const wallet = new Wallet(walletInfo.privateKey, provider()); // Menggunakan Wallet dari ethers
+  const wallet = new ethers.Wallet(walletInfo.privatekey, provider());
   let recipientAddress, destinationName, channelId, operand;
 
   if (destination === 'babylon') {
@@ -241,9 +240,9 @@ async function sendFromWallet(walletInfo, maxTransaction, destination, telegramB
     destinationName = 'Babylon';
     channelId = 7;
     if (!recipientAddress) {
-      const logMsg = `Melewati dompet '${walletInfo.name || 'Tanpa Nama'}': Alamat Babylon tidak ada.`; // Ganti nama variabel
-      logger.warn(logMsg);
-      if (telegramBot && chatId) telegramBot.sendMessage(chatId, logMsg);
+      const msg = `Melewati dompet '${walletInfo.name || 'Tanpa Nama'}': Alamat Babylon tidak ada.`;
+      logger.warn(msg);
+      if (telegramBot && chatId) telegramBot.sendMessage(chatId, msg);
       return;
     }
   } else if (destination === 'holesky') {
@@ -251,15 +250,15 @@ async function sendFromWallet(walletInfo, maxTransaction, destination, telegramB
     destinationName = 'Holesky';
     channelId = 8;
   } else {
-    const logMsg = `Tujuan tidak valid: ${destination}`; // Ganti nama variabel
-    logger.error(logMsg);
-    if (telegramBot && chatId) telegramBot.sendMessage(chatId, logMsg);
+    const msg = `Tujuan tidak valid: ${destination}`;
+    logger.error(msg);
+    if (telegramBot && chatId) telegramBot.sendMessage(chatId, msg);
     return;
   }
 
-  const logMsg = `Mengirim ${maxTransaction} Transaksi dari Sepolia ke ${destinationName} dari ${wallet.address} (${walletInfo.name || 'Tanpa Nama'})`; // Ganti nama variabel
-  logger.loading(logMsg);
-  if (telegramBot && chatId) telegramBot.sendMessage(chatId, logMsg);
+  const msg = `Mengirim ${maxTransaction} Transaksi dari Sepolia ke ${destinationName} dari ${wallet.address} (${walletInfo.name || 'Tanpa Nama'})`;
+  logger.loading(msg);
+  if (telegramBot && chatId) telegramBot.sendMessage(chatId, msg);
 
   const shouldProceed = await checkBalanceAndApprove(wallet, USDC_ADDRESS, contractAddress);
   if (!shouldProceed) {
@@ -275,7 +274,7 @@ async function sendFromWallet(walletInfo, maxTransaction, destination, telegramB
   if (destination === 'babylon') {
     operand = `0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000001e00000000000000000000000000000000000000000000000000000000000002710000000000000000000000000000000000000000000000000000000000000022000000000000000000000000000000000000000000000000000000000000002600000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a000000000000000000000000000000000000000000000000000000000000027100000000000000000000000000000000000000000000000000000000000000014${senderHex}000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a${recipientHex}0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000141c7d4b196cb0c7b01d743fbc6116a902379c72380000000000000000000000000000000000000000000000000000000000000000000000000000000000000004555344430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045553444300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003e62626e317a7372763233616b6b6778646e77756c3732736674677632786a74356b68736e743377776a687030666668363833687a7035617135613068366e0000`;
   } else {
-    operand = `0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000002c00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000002710000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000024000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000027100000000000000000000000000000000000000000000000000000000000000014${senderHex}0000000000000000000000000000000000000000000000000000000000000000000000000000000000000014${senderHex}00000000000000000000000000000000000000000000000000000000000000000000000000000000000000141c7d4b196cb0c7b01d743fbc6116a902379c72380000000000000000000000000000000000000000000000000000000000000000000000000000000000000004555344430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045553444300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001457978bfe465ad9b1c0bf80f6c1539d300705ea50000000000000000000000000`;
+    operand = `0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000002c00000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000001c000000000000000000000000000000000000000000000000000000000000027100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000024000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000028000000000000000000000000000000000000000000000000000000000000027100000000000000000000000000000000000000000000000000000000000000014${senderHex}0000000000000000000000000000000000000000000000000000000000000000000000000000000000000014${senderHex}00000000000000000000000000000000000000000000000000000000000000000000000000000000000000141c7d4b196cb0c7b01d743fbc6116a902379c72380000000000000000000000000000000000000000000000000000000000000000000000000000000000000004555344430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000045553444300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001457978bfe465ad9b1c0bf80f6c1539d300705ea50000000000000000000000000`;
   }
 
   for (let i = 1; i <= maxTransaction; i++) {
@@ -284,14 +283,10 @@ async function sendFromWallet(walletInfo, maxTransaction, destination, telegramB
     const oneDayNs = 86_400_000_000_000n;
     const timeoutTimestamp = (now + oneDayNs).toString();
     const timestampNow = Math.floor(Date.now() / 1000);
-
-    // FIX: Menggunakan solidityPacked dengan argumen yang benar dan keccak256
-    const salt = keccak256(solidityPacked(['address', 'uint256'], [wallet.address, timestampNow]));
-
-    // FIX: Menggunakan nilai numerik untuk version dan opcode
+    const salt = ethers.keccak256(ethers.solidityPacked(['address', 'uint256'], [wallet.address, timestampNow]));
     const instruction = {
       version: 0,
-      opcode: 2, // 0x02 dalam hex adalah 2 dalam desimal
+      opcode: 2,
       operand,
     };
 
@@ -308,10 +303,12 @@ async function sendFromWallet(walletInfo, maxTransaction, destination, telegramB
         logger.success(packetMsg);
         if (telegramBot && chatId) telegramBot.sendMessage(chatId, packetMsg);
       }
+      console.log('');
     } catch (err) {
       const errMsg = `Gagal untuk ${wallet.address}: ${err.message}`;
       logger.error(errMsg);
       if (telegramBot && chatId) telegramBot.sendMessage(chatId, errMsg);
+      console.log('');
     }
 
     if (i < maxTransaction) {
@@ -332,12 +329,12 @@ async function mainConsole() {
     wallets = [];
     let index = 1;
     while (true) {
-      const privateKey = process.env[`PRIVATE_KEY_${index}`]; // Menggunakan privateKey (huruf kapital)
+      const privateKey = process.env[`PRIVATE_KEY_${index}`];
       const babylonAddress = process.env[`BABYLON_ADDRESS_${index}`];
       if (!privateKey) break;
       wallets.push({
         name: `Dompet${index}`,
-        privateKey: privateKey, // Menggunakan privateKey (huruf kapital)
+        privatekey: privateKey,
         babylonAddress: babylonAddress || ''
       });
       index++;
@@ -347,7 +344,6 @@ async function mainConsole() {
 
   if (wallets.length === 0) {
     logger.error(`Tidak ada dompet ditemukan di .env atau wallets.json. Harap sediakan setidaknya satu PRIVATE_KEY_X.`);
-    rl.close();
     process.exit(1);
   }
 
@@ -380,15 +376,15 @@ async function mainConsole() {
     }
 
     for (const walletInfo of wallets) {
-      if (!walletInfo.privateKey) { // Menggunakan privateKey (huruf kapital)
+      if (!walletInfo.privatekey) {
         logger.warn(`Melewati dompet '${walletInfo.name}': Kunci pribadi tidak ada.`);
         continue;
       }
-      if (!walletInfo.privateKey.startsWith('0x')) { // Menggunakan privateKey (huruf kapital)
+      if (!walletInfo.privatekey.startsWith('0x')) {
         logger.warn(`Melewati dompet '${walletInfo.name}': Kunci pribadi harus dimulai dengan '0x'.`);
         continue;
       }
-      if (!/^(0x)[0-9a-fA-F]{64}$/.test(walletInfo.privateKey)) { // Menggunakan privateKey (huruf kapital)
+      if (!/^(0x)[0-9a-fA-F]{64}$/.test(walletInfo.privatekey)) {
         logger.warn(`Melewati dompet '${walletInfo.name}': Kunci pribadi bukan string heksadesimal 64 karakter yang valid.`);
         continue;
       }
@@ -495,11 +491,7 @@ function mainTelegram() {
       return;
     }
 
-    // FIX: Menghapus deklarasi duplikat
-    // const salt = keccak256(defaultAbiCoder.encode(["address", "uint256"], [wallet.address, timestampNow])); // <-- HAPUS INI
-    // const instruction = { version: "0", opcode: "0x02", operand }; // <-- HAPUS INI
-    // const instruction = { version: "0", opcode: "0x02", operand }; // <-- HAPUS INI
-
+    // Menambah dompet
     if (data === 'add_wallet') {
       userState[chatId] = { step: 'add_wallet_input' };
       bot.sendMessage(chatId, 'Harap masukkan detail dompet dengan format:\nnama: <nama_dompet>\nkunci_pribadi: <kunci_pribadi>\nalamat_babylon: <alamat_babylon> (opsional)', {
@@ -521,8 +513,7 @@ function mainTelegram() {
         });
         return;
       }
-      // FIX: Menggunakan Wallet dari ethers untuk mendapatkan alamat dari privateKey
-      const walletList = wallets.map(w => `Nama: ${w.name}\nAlamat: ${new Wallet(w.privateKey).address}\nAlamat Babylon: ${w.babylonAddress || 'Tidak Ada'}`).join('\n\n');
+      const walletList = wallets.map(w => `Nama: ${w.name}\nAlamat: ${new ethers.Wallet(w.privatekey).address}\nAlamat Babylon: ${w.babylonAddress || 'Tidak Ada'}`).join('\n\n');
       bot.sendMessage(chatId, `Dompet:\n\n${walletList}`, {
         reply_markup: {
           inline_keyboard: [backToHomeButton],
@@ -611,7 +602,7 @@ function mainTelegram() {
         const wallets = loadWallets();
         wallets.push({
           name: wallet.nama,
-          privateKey: wallet.kunci_pribadi, // FIX: Menyesuaikan dengan privateKey (huruf kapital)
+          privatekey: wallet.kunci_pribadi,
           babylonAddress: wallet.alamat_babylon || ''
         });
         saveWallets(wallets);
@@ -662,7 +653,7 @@ function mainTelegram() {
       });
 
       for (const walletInfo of wallets) {
-        if (!walletInfo.privateKey) { // FIX: Menggunakan privateKey (huruf kapital)
+        if (!walletInfo.privatekey) {
           bot.sendMessage(chatId, `Melewati dompet '${walletInfo.name}': Kunci pribadi tidak ada.`, {
             reply_markup: {
               inline_keyboard: [backToHomeButton],
@@ -670,7 +661,7 @@ function mainTelegram() {
           });
           continue;
         }
-        if (!walletInfo.privateKey.startsWith('0x')) { // FIX: Menggunakan privateKey (huruf kapital)
+        if (!walletInfo.privatekey.startsWith('0x')) {
           bot.sendMessage(chatId, `Melewati dompet '${walletInfo.name}': Kunci pribadi harus dimulai dengan '0x'.`, {
             reply_markup: {
               inline_keyboard: [backToHomeButton],
@@ -678,7 +669,7 @@ function mainTelegram() {
           });
           continue;
         }
-        if (!/^(0x)[0-9a-fA-F]{64}$/.test(walletInfo.privateKey)) { // FIX: Menggunakan privateKey (huruf kapital)
+        if (!/^(0x)[0-9a-fA-F]{64}$/.test(walletInfo.privatekey)) {
           bot.sendMessage(chatId, `Melewati dompet '${walletInfo.name}': Kunci pribadi bukan string heksadesimal 64 karakter yang valid.`, {
             reply_markup: {
               inline_keyboard: [backToHomeButton],
